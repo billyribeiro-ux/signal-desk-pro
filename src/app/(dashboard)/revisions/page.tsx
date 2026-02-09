@@ -23,7 +23,7 @@ export default function RevisionsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <AlertCircle className="h-12 w-12 text-danger" />
-        <h2 className="mt-4 text-heading-3 font-semibold text-text">Failed to load revisions</h2>
+        <h1 className="mt-4 text-heading-3 font-semibold text-text">Failed to load revisions</h1>
         <p className="mt-1 text-body-sm text-text-muted">Something went wrong fetching revision requests.</p>
         <Button variant="secondary" className="mt-4" onClick={() => refetch()}>Try Again</Button>
       </div>

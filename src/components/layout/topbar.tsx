@@ -1,13 +1,27 @@
 "use client";
 
 import { Bell, Search, Moon, Sun } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query/query-keys";
+import { apiClient } from "@/lib/api/client";
 import { useAuth } from "@/context/auth-context";
 import { useTheme } from "@/context/theme-context";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+function useUnreadCount() {
+  return useQuery({
+    queryKey: queryKeys.notifications.unreadCount(),
+    queryFn: () => apiClient.get<{ count: number }>("/api/notifications?type=unread-count"),
+    refetchInterval: 30_000,
+  });
+}
 
 export function Topbar() {
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+  const { data: unread } = useUnreadCount();
+  const unreadCount = unread?.count ?? 0;
 
   return (
     <header className="sticky top-0 z-[50] flex h-16 items-center justify-between border-b border-border bg-surface/80 px-6 backdrop-blur-md">
@@ -37,9 +51,16 @@ export function Topbar() {
           )}
         </Button>
 
-        <Button variant="ghost" size="icon" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <Link href="/settings">
+          <Button variant="ghost" size="icon" aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`} className="relative">
+            <Bell className="h-4 w-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-text-inverse">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Button>
+        </Link>
 
         <div className="ml-2 flex items-center gap-3 border-l border-border pl-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-caption font-semibold text-text-inverse">

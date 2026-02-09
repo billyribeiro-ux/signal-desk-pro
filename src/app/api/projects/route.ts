@@ -14,6 +14,18 @@ export async function GET(req: NextRequest) {
         { status: 404 },
       );
     }
+
+    const type = searchParams.get("type");
+    if (type === "activity") {
+      const activity = [
+        { id: "act-1", action: "PROJECT_CREATED", description: `Project "${project.name}" was created`, actorName: "Alex Morgan", createdAt: project.createdAt },
+        { id: "act-2", action: "STATUS_CHANGED", description: `Status changed to ${project.status.replace("_", " ")}`, actorName: "Jordan Lee", createdAt: new Date(Date.now() - 7 * 86400000).toISOString() },
+        { id: "act-3", action: "BUDGET_UPDATED", description: `Budget set to $${Number(project.budget).toLocaleString()}`, actorName: "Alex Morgan", createdAt: new Date(Date.now() - 5 * 86400000).toISOString() },
+        { id: "act-4", action: "PROGRESS_UPDATED", description: `Progress updated to ${project.progress}%`, actorName: "Sam Chen", createdAt: new Date(Date.now() - 2 * 86400000).toISOString() },
+      ];
+      return NextResponse.json(activity);
+    }
+
     return NextResponse.json(project);
   }
 

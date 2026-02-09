@@ -6,7 +6,7 @@ import type { ThemeMode } from "@/lib/constants/theme";
 interface ThemeContextValue {
   theme: ThemeMode;
   resolvedTheme: "light" | "dark";
-  setTheme: (theme: ThemeMode) => void;
+  setTheme: (_theme: ThemeMode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
