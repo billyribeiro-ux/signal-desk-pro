@@ -23,7 +23,43 @@ export function useCreateClient() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: ClientFormData) => clientsApi.create(data),
-    onSuccess: () => {
+    onMutate: async (newClient) => {
+      await qc.cancelQueries({ queryKey: queryKeys.clients.all });
+      const previousLists = qc.getQueriesData({ queryKey: queryKeys.clients.all });
+
+      qc.setQueriesData(
+        { queryKey: queryKeys.clients.all },
+        (old: unknown) => {
+          if (!old || typeof old !== "object") return old;
+          const prev = old as { data: unknown[]; meta: unknown };
+          return {
+            ...prev,
+            data: [
+              {
+                id: `optimistic-${Date.now()}`,
+                ...newClient,
+                status: "onboarding",
+                projectCount: 0,
+                totalRevenue: 0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              },
+              ...(prev.data ?? []),
+            ],
+          };
+        },
+      );
+
+      return { previousLists };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          qc.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: queryKeys.clients.all });
     },
   });

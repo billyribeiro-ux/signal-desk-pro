@@ -23,7 +23,9 @@ Open http://localhost:3000
 1. Navigate to `/clients`
 2. Use the search input to filter clients by name or company
 3. Observe the table with status badges, project counts, and revenue
-4. Note the empty state when no results match
+4. Click **Add Client** — fill out the modal form (Zod-validated), submit → toast confirmation
+5. Click the trash icon on any row → **Confirm Dialog** appears → confirm deletion → toast
+6. Note the empty state when no results match
 
 ## Flow 4: Project Command Center
 1. Navigate to `/projects`

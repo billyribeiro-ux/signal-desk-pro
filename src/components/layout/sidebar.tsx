@@ -9,6 +9,7 @@ import {
   GitPullRequest,
   Settings,
   Sparkles,
+  CreditCard,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const navItems = [
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Revisions", href: "/revisions", icon: GitPullRequest },
+  { label: "Billing", href: "/billing", icon: CreditCard },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Motion", href: "/motion-showcase", icon: Sparkles },
 ];
