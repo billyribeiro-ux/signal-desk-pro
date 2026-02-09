@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 import { Button } from "./button";
 
 interface DrawerProps {
@@ -22,7 +23,7 @@ export function Drawer({
   side = "right",
   className,
 }: DrawerProps) {
-  const drawerRef = useRef<HTMLDivElement>(null);
+  const trapRef = useFocusTrap(isOpen);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -35,7 +36,6 @@ export function Drawer({
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
-      drawerRef.current?.focus();
     }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
@@ -53,7 +53,7 @@ export function Drawer({
         aria-hidden="true"
       />
       <div
-        ref={drawerRef}
+        ref={trapRef}
         tabIndex={-1}
         className={cn(
           "absolute top-0 bottom-0 w-full max-w-md border-border bg-surface shadow-elevation-4",

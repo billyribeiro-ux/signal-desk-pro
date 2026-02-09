@@ -1,4 +1,5 @@
 export type ProjectStatus = "draft" | "active" | "in_review" | "completed" | "archived";
+export type ProjectPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Project {
   id: string;
@@ -7,7 +8,7 @@ export interface Project {
   clientId: string;
   clientName: string;
   status: ProjectStatus;
-  priority: "low" | "medium" | "high" | "urgent";
+  priority: ProjectPriority;
   startDate: string;
   dueDate: string;
   completedDate?: string;

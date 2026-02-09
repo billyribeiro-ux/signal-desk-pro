@@ -53,12 +53,15 @@ export default function SettingsPage() {
               <Card>
                 <h2 className="text-heading-3 font-semibold text-text mb-4">Notification Preferences</h2>
                 <div className="space-y-4">
-                  {["Email Digest", "Project Updates", "Revision Alerts", "Client Activity"].map((label) => (
-                    <label key={label} className="flex items-center justify-between rounded-lg border border-border p-4">
-                      <span className="text-body-sm font-medium text-text">{label}</span>
-                      <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-border text-primary focus:ring-ring" />
-                    </label>
-                  ))}
+                  {["Email Digest", "Project Updates", "Revision Alerts", "Client Activity"].map((label) => {
+                    const id = `notif-${label.toLowerCase().replace(/\s+/g, "-")}`;
+                    return (
+                      <div key={label} className="flex items-center justify-between rounded-lg border border-border p-4">
+                        <label htmlFor={id} className="text-body-sm font-medium text-text cursor-pointer">{label}</label>
+                        <input id={id} type="checkbox" defaultChecked className="h-4 w-4 rounded border-border text-primary focus:ring-ring" aria-label={label} />
+                      </div>
+                    );
+                  })}
                 </div>
               </Card>
             )}

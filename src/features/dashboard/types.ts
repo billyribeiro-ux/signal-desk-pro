@@ -16,6 +16,6 @@ export interface ActivityItem {
 
 export interface DashboardMetrics {
   kpis: KpiMetric[];
-  recentActivity: ActivityItem[];
-  throughputData: { month: string; completed: number; submitted: number }[];
+  activity: ActivityItem[];
+  throughput: number[];
 }

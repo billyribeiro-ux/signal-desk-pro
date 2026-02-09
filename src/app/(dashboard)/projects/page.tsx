@@ -1,28 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle } from "lucide-react";
+import { useProjects } from "@/features/projects/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProjectCard } from "@/features/projects/components/project-card";
-import type { Project } from "@/features/projects/types";
-
-const mockProjects: Project[] = [
-  { id: "1", name: "Website Redesign", description: "Complete overhaul of the corporate website with modern design system", clientId: "1", clientName: "Acme Corp", status: "active", priority: "high", startDate: "2024-03-01T00:00:00Z", dueDate: "2024-07-15T00:00:00Z", budget: 45000, spent: 28000, progress: 65, tags: ["design", "web"], createdAt: "2024-03-01T00:00:00Z", updatedAt: "2024-06-01T00:00:00Z" },
-  { id: "2", name: "Mobile App MVP", description: "Build a cross-platform mobile application for client portal access", clientId: "2", clientName: "TechStart", status: "in_review", priority: "urgent", startDate: "2024-04-01T00:00:00Z", dueDate: "2024-08-01T00:00:00Z", budget: 80000, spent: 55000, progress: 80, tags: ["mobile", "react-native"], createdAt: "2024-04-01T00:00:00Z", updatedAt: "2024-06-01T00:00:00Z" },
-  { id: "3", name: "Brand Identity", description: "Full brand identity package including logo, typography, and guidelines", clientId: "3", clientName: "BrandCo", status: "completed", priority: "medium", startDate: "2024-01-15T00:00:00Z", dueDate: "2024-04-30T00:00:00Z", completedDate: "2024-04-28T00:00:00Z", budget: 25000, spent: 23000, progress: 100, tags: ["branding"], createdAt: "2024-01-15T00:00:00Z", updatedAt: "2024-04-28T00:00:00Z" },
-  { id: "4", name: "Analytics Dashboard", description: "Custom analytics dashboard with real-time data visualization", clientId: "4", clientName: "GlobalFin", status: "draft", priority: "low", startDate: "2024-06-01T00:00:00Z", dueDate: "2024-09-30T00:00:00Z", budget: 60000, spent: 0, progress: 0, tags: ["analytics", "dashboard"], createdAt: "2024-05-20T00:00:00Z", updatedAt: "2024-05-20T00:00:00Z" },
-  { id: "5", name: "E-commerce Platform", description: "Headless e-commerce solution with custom checkout flow", clientId: "5", clientName: "Creative Lab", status: "active", priority: "high", startDate: "2024-02-15T00:00:00Z", dueDate: "2024-06-30T00:00:00Z", budget: 95000, spent: 72000, progress: 78, tags: ["ecommerce", "nextjs"], createdAt: "2024-02-15T00:00:00Z", updatedAt: "2024-06-01T00:00:00Z" },
-  { id: "6", name: "SEO Audit", description: "Comprehensive SEO audit and optimization recommendations", clientId: "1", clientName: "Acme Corp", status: "active", priority: "medium", startDate: "2024-05-01T00:00:00Z", dueDate: "2024-06-15T00:00:00Z", budget: 8000, spent: 5500, progress: 70, tags: ["seo"], createdAt: "2024-05-01T00:00:00Z", updatedAt: "2024-06-01T00:00:00Z" },
-];
+import { SkeletonCard } from "@/components/ui/skeleton";
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState("");
-  const filtered = mockProjects.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.clientName.toLowerCase().includes(search.toLowerCase()),
-  );
+  const { data, isLoading, isError, refetch } = useProjects({ search: search || undefined });
+
+  const projects = data?.data ?? [];
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <AlertCircle className="h-12 w-12 text-danger" />
+        <h2 className="mt-4 text-heading-3 font-semibold text-text">Failed to load projects</h2>
+        <p className="mt-1 text-body-sm text-text-muted">Something went wrong fetching your projects.</p>
+        <Button variant="secondary" className="mt-4" onClick={() => refetch()}>Try Again</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -42,18 +43,25 @@ export default function ProjectsPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-sm"
+        aria-label="Search projects"
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((project) => (
-          <ProjectCard key={project.id} project={project} />
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
           <p className="text-body font-medium text-text">No projects found</p>
-          <p className="mt-1 text-body-sm text-text-muted">Try adjusting your search</p>
+          <p className="mt-1 text-body-sm text-text-muted">Try adjusting your search or create a new project</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
         </div>
       )}
     </div>

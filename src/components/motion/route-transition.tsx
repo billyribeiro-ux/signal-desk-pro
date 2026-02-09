@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { MOTION_TOKENS } from "@/lib/motion/tokens";
 import { usePrefersReducedMotion } from "@/lib/motion/reduced-motion";
 
 export function RouteTransition({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
   const prefersReduced = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -22,10 +24,10 @@ export function RouteTransition({ children }: { children: React.ReactNode }) {
         ease: MOTION_TOKENS.ease.default,
       },
     );
-  }, [prefersReduced]);
+  }, [pathname, prefersReduced]);
 
   return (
-    <div ref={ref} className="animate-fade-in">
+    <div ref={ref}>
       {children}
     </div>
   );

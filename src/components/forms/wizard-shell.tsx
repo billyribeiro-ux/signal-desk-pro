@@ -12,7 +12,7 @@ interface WizardStep {
 interface WizardShellProps {
   steps: WizardStep[];
   currentStep: number;
-  onStepClick?: (step: number) => void;
+  onStepClick?: (_step: number) => void;
   onNext?: () => void;
   onPrev?: () => void;
   onSubmit?: () => void;

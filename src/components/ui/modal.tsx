@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { useFocusTrap } from "@/lib/hooks/use-focus-trap";
 import { Button } from "./button";
 
 interface ModalProps {
@@ -28,8 +29,7 @@ export function Modal({
   className,
   size = "md",
 }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const trapRef = useFocusTrap(isOpen);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -42,7 +42,6 @@ export function Modal({
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
-      contentRef.current?.focus();
     }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
@@ -54,7 +53,6 @@ export function Modal({
 
   return (
     <div
-      ref={overlayRef}
       className="fixed inset-0 z-[300] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
@@ -66,7 +64,7 @@ export function Modal({
         aria-hidden="true"
       />
       <div
-        ref={contentRef}
+        ref={trapRef}
         tabIndex={-1}
         className={cn(
           "relative z-10 w-full rounded-2xl border border-border bg-surface p-6 shadow-elevation-4",

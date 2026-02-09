@@ -1,40 +1,91 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revisions, genId, simulateLatency } from "@/lib/api/db";
+import type { RevisionStatus } from "@/features/revisions/types";
 
-const mockRevisions = [
-  { id: "1", projectId: "1", projectName: "Website Redesign", title: "Homepage Hero v2", description: "Updated hero section", status: "pending", version: 2, submittedBy: "Jordan Lee", createdAt: new Date(Date.now() - 3600000).toISOString(), updatedAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: "2", projectId: "2", projectName: "Mobile App MVP", title: "Onboarding Flow v3", description: "Revised onboarding", status: "approved", version: 3, submittedBy: "Sam Chen", reviewedBy: "Alex Morgan", createdAt: new Date(Date.now() - 86400000).toISOString(), updatedAt: new Date(Date.now() - 43200000).toISOString() },
-  { id: "3", projectId: "3", projectName: "Brand Identity", title: "Logo Concepts v1", description: "Initial logo concepts", status: "changes_requested", version: 1, submittedBy: "Jordan Lee", reviewedBy: "Emily Davis", createdAt: new Date(Date.now() - 172800000).toISOString(), updatedAt: new Date(Date.now() - 86400000).toISOString() },
-];
-
-const mockThread = [
-  { id: "m1", revisionId: "1", author: "Jordan Lee", authorRole: "member", content: "Updated the hero section with new copy and layout per client feedback.", createdAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: "m2", revisionId: "1", author: "Alex Morgan", authorRole: "manager", content: "Looks good overall. Can we adjust the CTA button color?", createdAt: new Date(Date.now() - 1800000).toISOString() },
-];
+const threads: Record<string, Array<{ id: string; revisionId: string; author: string; authorRole: string; content: string; createdAt: string }>> = {
+  "1": [
+    { id: "m1", revisionId: "1", author: "Jordan Lee", authorRole: "member", content: "Updated the hero section with new copy and layout per client feedback.", createdAt: new Date(Date.now() - 3600000).toISOString() },
+    { id: "m2", revisionId: "1", author: "Alex Morgan", authorRole: "manager", content: "Looks good overall. Can we adjust the CTA button color to match the brand guide?", createdAt: new Date(Date.now() - 1800000).toISOString() },
+  ],
+  "3": [
+    { id: "m3", revisionId: "3", author: "Jordan Lee", authorRole: "member", content: "Here are three logo directions — wordmark, abstract mark, and combination.", createdAt: new Date(Date.now() - 172800000).toISOString() },
+    { id: "m4", revisionId: "3", author: "Emily Davis", authorRole: "admin", content: "I like direction 2 but the colors feel too muted. Can we try bolder tones?", createdAt: new Date(Date.now() - 86400000).toISOString() },
+    { id: "m5", revisionId: "3", author: "Jordan Lee", authorRole: "member", content: "Sure — I'll revise with a more saturated palette and send v2.", createdAt: new Date(Date.now() - 43200000).toISOString() },
+  ],
+};
 
 export async function GET(req: NextRequest) {
+  await simulateLatency();
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   const type = searchParams.get("type");
   const revisionId = searchParams.get("revisionId");
 
   if (type === "thread" && revisionId) {
-    return NextResponse.json(mockThread.filter((m) => m.revisionId === revisionId));
+    return NextResponse.json(threads[revisionId] ?? []);
   }
 
   if (id) {
-    const rev = mockRevisions.find((r) => r.id === id);
-    if (!rev) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const rev = revisions.find((r) => r.id === id);
+    if (!rev) {
+      return NextResponse.json(
+        { error: { message: "Revision not found", code: "NOT_FOUND", status: 404 } },
+        { status: 404 },
+      );
+    }
     return NextResponse.json(rev);
   }
 
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const pageSize = parseInt(searchParams.get("pageSize") ?? "10");
-  const total = mockRevisions.length;
-  const data = mockRevisions.slice((page - 1) * pageSize, page * pageSize);
-  return NextResponse.json({ data, meta: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) } });
+  const status = searchParams.get("status") ?? "";
+  const page = Number(searchParams.get("page") ?? 1);
+  const pageSize = Number(searchParams.get("pageSize") ?? 20);
+
+  let filtered = [...revisions];
+  if (status) {
+    filtered = filtered.filter((r) => r.status === status);
+  }
+
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const start = (page - 1) * pageSize;
+  const data = filtered.slice(start, start + pageSize);
+
+  return NextResponse.json({ data, meta: { total, page, pageSize, totalPages } });
 }
 
 export async function POST(req: NextRequest) {
+  await simulateLatency(200);
   const body = await req.json();
-  return NextResponse.json({ ...body, updatedAt: new Date().toISOString() });
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type");
+
+  // Add a thread message
+  if (type === "thread") {
+    const revisionId = body.revisionId as string;
+    if (!threads[revisionId]) threads[revisionId] = [];
+    const msg = { id: genId(), revisionId, author: body.author ?? "Alex Morgan", authorRole: body.authorRole ?? "admin", content: body.content, createdAt: new Date().toISOString() };
+    threads[revisionId].push(msg);
+    return NextResponse.json(msg, { status: 201 });
+  }
+
+  // Update revision status (approve/reject/request_changes)
+  if (type === "action") {
+    const revisionId = body.revisionId as string;
+    const action = body.action as RevisionStatus;
+    const idx = revisions.findIndex((r) => r.id === revisionId);
+    if (idx === -1) {
+      return NextResponse.json(
+        { error: { message: "Revision not found", code: "NOT_FOUND", status: 404 } },
+        { status: 404 },
+      );
+    }
+    revisions[idx] = { ...revisions[idx], status: action, reviewedBy: "Alex Morgan", updatedAt: new Date().toISOString() };
+    return NextResponse.json(revisions[idx]);
+  }
+
+  // Create new revision
+  const now = new Date().toISOString();
+  const newRev = { id: genId(), ...body, status: "pending" as const, createdAt: now, updatedAt: now };
+  revisions.unshift(newRev);
+  return NextResponse.json(newRev, { status: 201 });
 }
